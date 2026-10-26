@@ -1,0 +1,2 @@
+[console_scripts]
+nexus-engine = nexus_engine.cli:main

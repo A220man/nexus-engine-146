@@ -1,0 +1,23 @@
+Metadata-Version: 2.4
+Name: nexus-engine-146
+Version: 0.1.0
+Summary: Give your AI agent eyes to see the entire internet. Read & search Twitter, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu — one CLI, zero API fees.
+Author-email: Ryan Vo <ryandtvo@gmail.com>
+License: MIT
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: click>=8.1
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: requests>=2.31
+Requires-Dist: rich>=13.0
+Provides-Extra: browser
+Requires-Dist: playwright>=1.40; extra == "browser"
+Provides-Extra: cookies
+Requires-Dist: browser-cookie3>=0.22; extra == "cookies"
+Provides-Extra: all
+Requires-Dist: nexus-engine-146[browser,cookies]; extra == "all"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4; extra == "dev"
+Requires-Dist: pytest-mock>=3.12; extra == "dev"
+Requires-Dist: ruff>=0.5; extra == "dev"
+Requires-Dist: mypy>=1.10; extra == "dev"
