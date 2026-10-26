@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "current_feature": "core-cli",
+  "features": [
+    {
+      "id": "core-cli",
+      "title": "Core CLI skeleton with configuration and basic commands",
+      "status": "done",
+      "acceptance": [
+        "CLI entrypoint 'nexus-engine' runs and shows help",
+        "Configuration file at ~/.config/nexus-engine/config.yaml",
+        "Basic 'configure' command to set API keys",
+        "Basic 'doctor' command to check environment"
+      ],
+      "implementation": [
+        "nexus_engine/cli.py",
+        "nexus_engine/config.py",
+        "pyproject.toml"
+      ],
+      "tests": [
+        "tests/test_cli.py",
+        "tests/test_config.py"
+      ]
+    },
+    {
+      "id": "channels-youtube",
+      "title": "YouTube channel with yt-dlp transcript extraction",
+      "status": "planned",
+      "acceptance": [
+        "Search YouTube videos",
+        "Extract transcripts via yt-dlp",
+        "Handle bot challenges gracefully"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "channels-social",
+      "title": "Social media channels (Twitter, Reddit, Instagram, TikTok, Xiaohongshu, Bilibili)",
+      "status": "planned",
+      "acceptance": [
+        "Search posts/profiles on each platform",
+        "Read post content and metadata",
+        "Support authenticated access where applicable"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "channels-github",
+      "title": "GitHub channel for code search and repo info",
+      "status": "planned",
+      "acceptance": [
+        "Search repositories",
+        "Read repository metadata",
+        "List issues/PRs"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "integrations-mcp",
+      "title": "MCP server integration",
+      "status": "planned",
+      "acceptance": [
+        "Run as MCP server",
+        "Expose search/read tools to AI agents"
+      ],
+      "implementation": [],
+      "tests": []
+    },
+    {
+      "id": "youtube-transcript-api",
+      "title": "Optional GetYouTubeTranscript API backend",
+      "status": "planned",
+      "acceptance": [
+        "Config option for API key",
+        "Fallback to API when yt-dlp fails with bot challenge",
+        "Doctor reports API availability"
+      ],
+      "implementation": [],
+      "tests": []
+    }
+  ]
+}
