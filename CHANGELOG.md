@@ -1,14 +1,30 @@
 # Changelog
 
+## 1.1.0 — work-in-progress checkpoint
+
+Partial code published for continued development. Known issues: STATUS.md.
+
 ## 1.0.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
 
-All notable changes to this project will be documented in this file.
+## [0.2.0] - 2026-11-01
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Added
+- YouTube channel implementation with yt-dlp integration
+- `nexus-engine youtube search` command for video search
+- `nexus-engine youtube transcript` command for subtitle extraction
+- `nexus-engine youtube info` command for video metadata
+- `youtube` optional dependency extra (yt-dlp)
+- YouTube channel tests (unit tests with mocks)
+- Video ID extraction from multiple URL formats
+- VTT subtitle parsing with timestamp support
+- Bot challenge detection and graceful error messaging
 
+### Changed
+- Updated README with YouTube commands and installation instructions
+- Added youtube optional dependency to pyproject.toml
+- Updated PLAN.md and feature-plan.json for channels-youtube in_progress
 ## [0.1.0] - 2026-10-26
 
 ### Added
