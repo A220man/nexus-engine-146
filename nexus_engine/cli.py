@@ -16,6 +16,12 @@ from .config import (
     save_config,
     set_api_key,
 )
+from .channels.youtube import (
+    search_youtube,
+    get_transcript,
+    get_video_info,
+    extract_video_id,
+)
 
 console = Console()
 
@@ -147,6 +153,85 @@ def read(url: str) -> None:
     """Read content from a URL (placeholder)."""
     console.print(f"[yellow]Read not yet implemented[/yellow]")
     console.print(f"URL: {url}")
+
+
+@main.group()
+def youtube() -> None:
+    """YouTube channel commands."""
+    pass
+
+
+@youtube.command("search")
+@click.argument("query")
+@click.option("--limit", "-l", default=10, help="Maximum results")
+def youtube_search(query: str, limit: int) -> None:
+    """Search YouTube videos."""
+    console.print(f"[cyan]Searching YouTube for:[/cyan] {query}")
+    results = search_youtube(query, limit)
+    if not results:
+        console.print("[yellow]No results found[/yellow]")
+        return
+    table = Table(show_header=True, header_style="bold")
+    table.add_column("Title", style="white", max_width=50)
+    table.add_column("Channel", style="cyan", max_width=25)
+    table.add_column("Duration", style="yellow", justify="right")
+    table.add_column("Views", style="green", justify="right")
+    table.add_column("ID", style="dim", max_width=15)
+    for video in results:
+        duration = video.get("duration")
+        dur_str = f"{duration//60}:{duration%60:02d}" if duration else "N/A"
+        views = video.get("view_count")
+        views_str = f"{views:,}" if views else "N/A"
+        table.add_row(
+            video.get("title", "N/A")[:50],
+            video.get("channel", "N/A")[:25],
+            dur_str,
+            views_str,
+            video.get("id", "N/A"),
+        )
+    console.print(table)
+
+
+@youtube.command("transcript")
+@click.argument("url_or_id")
+@click.option("--lang", "-l", default="en", help="Subtitle language code")
+def youtube_transcript(url_or_id: str, lang: str) -> None:
+    """Extract transcript from a YouTube video."""
+    video_id = extract_video_id(url_or_id) or url_or_id
+    console.print(f"[cyan]Fetching transcript for video:[/cyan] {video_id}")
+    result = get_transcript(video_id, lang)
+    if not result:
+        return
+    segments = result.get("segments", [])
+    if not segments:
+        console.print("[yellow]No transcript segments found[/yellow]")
+        return
+    console.print(f"[green]Found {len(segments)} transcript segments[/green]")
+    for seg in segments:
+        start = seg.get("start", 0)
+        text = seg.get("text", "")
+        console.print(f"[dim]{start:>7.2f}s[/dim] {text}")
+
+
+@youtube.command("info")
+@click.argument("url_or_id")
+def youtube_info(url_or_id: str) -> None:
+    """Get video metadata."""
+    video_id = extract_video_id(url_or_id) or url_or_id
+    console.print(f"[cyan]Fetching info for video:[/cyan] {video_id}")
+    info = get_video_info(video_id)
+    if not info:
+        console.print("[red]Failed to fetch video info[/red]")
+        return
+    console.print(f"[bold]Title:[/bold] {info.get('title', 'N/A')}")
+    console.print(f"[bold]Channel:[/bold] {info.get('channel', 'N/A')}")
+    console.print(f"[bold]Duration:[/bold] {info.get('duration', 'N/A')}s")
+    console.print(f"[bold]Views:[/bold] {info.get('view_count', 'N/A')}")
+    console.print(f"[bold]Likes:[/bold] {info.get('like_count', 'N/A')}")
+    console.print(f"[bold]Upload date:[/bold] {info.get('upload_date', 'N/A')}")
+    if info.get("description"):
+        desc = info["description"][:500]
+        console.print(f"[bold]Description:[/bold] {desc}...")
 
 
 def main_entry() -> None:

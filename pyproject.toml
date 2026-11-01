@@ -22,14 +22,14 @@ dependencies = [
 [project.optional-dependencies]
 browser = ["playwright>=1.40"]
 cookies = ["browser-cookie3>=0.22"]
-all = ["nexus-engine-146[browser,cookies]"]
+youtube = ["yt-dlp>=2024.1.0"]
+all = ["nexus-engine-146[browser,cookies,youtube]"]
 dev = [
     "pytest>=7.4",
     "pytest-mock>=3.12",
     "ruff>=0.5",
     "mypy>=1.10",
 ]
-
 [project.scripts]
 nexus-engine = "nexus_engine.cli:main"
 

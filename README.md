@@ -1,4 +1,4 @@
-# Nexus Engine 146
+# Nexus Engine 146 — Ryan Vo
 
 > Work in progress. This checkpoint may be incomplete or fail tests. See PLAN.md and STATUS.md before use.
 
@@ -20,8 +20,12 @@ pip install nexus-engine-146[browser]
 # Cookie extraction support
 pip install nexus-engine-146[cookies]
 
+# YouTube channel support (yt-dlp)
+pip install nexus-engine-146[youtube]
+
 # All optional dependencies
 pip install nexus-engine-146[all]
+```
 ```
 
 ## Quick Start
@@ -38,10 +42,17 @@ nexus-engine configure youtube_transcript_api_key "your-key-here"
 nexus-engine configure --list
 
 # Search (placeholder)
-nexus-engine search "query"
+## YouTube Commands
 
-# Read content from URL (placeholder)
-nexus-engine read "https://example.com"
+```bash
+# Search YouTube videos
+nexus-engine youtube search "query" --limit 10
+
+# Get video transcript
+nexus-engine youtube transcript "https://www.youtube.com/watch?v=VIDEO_ID" --lang en
+
+# Get video metadata
+nexus-engine youtube info "https://www.youtube.com/watch?v=VIDEO_ID"
 ```
 
 ## Configuration
