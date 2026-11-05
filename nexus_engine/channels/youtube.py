@@ -1,6 +1,7 @@
 """YouTube channel implementation using yt-dlp."""
 
 import json
+import re
 import subprocess
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -15,6 +16,10 @@ console = Console()
 
 def extract_video_id(url: str) -> Optional[str]:
     """Extract YouTube video ID from various URL formats."""
+    # Handle bare video ID (11 chars, alphanumeric + hyphen/underscore)
+    if re.match(r"^[A-Za-z0-9_-]{11}$", url):
+        return url
+
     parsed = urlparse(url)
     if parsed.hostname in ("youtu.be", "www.youtu.be"):
         return parsed.path.lstrip("/")
@@ -190,16 +195,20 @@ def parse_vtt(content: str) -> List[Dict[str, Any]]:
 
 
 def parse_timestamp(ts: str) -> float:
-    """Parse VTT timestamp (HH:MM:SS.mmm or MM:SS.mmm) to seconds."""
+    """Parse VTT timestamp (HH:MM:SS.mmm, MM:SS.mmm, or SS.mmm) to seconds."""
     parts = ts.split(":")
     if len(parts) == 3:
         h, m, s = parts
     elif len(parts) == 2:
         h = 0
         m, s = parts
+    elif len(parts) == 1:
+        h = 0
+        m = 0
+        s = parts[0]
     else:
         return 0.0
-    return int(h) * 3600 + int(m) * 60 + float(s)
+    return round(int(h) * 3600 + int(m) * 60 + float(s), 3)
 
 
 def get_video_info(video_id: str) -> Optional[Dict[str, Any]]:
