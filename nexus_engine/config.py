@@ -2,15 +2,14 @@
 
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 import yaml
-
 
 DEFAULT_CONFIG_DIR = Path.home() / ".config" / "nexus-engine"
 DEFAULT_CONFIG_FILE = DEFAULT_CONFIG_DIR / "config.yaml"
 
-DEFAULT_CONFIG: Dict[str, Any] = {
+DEFAULT_CONFIG: dict[str, Any] = {
     "api_keys": {},
     "channels": {
         "youtube": {
@@ -36,20 +35,20 @@ def get_config_file() -> Path:
     return Path(os.environ.get("NEXUS_ENGINE_CONFIG_FILE", get_config_dir() / "config.yaml"))
 
 
-def load_config() -> Dict[str, Any]:
+def load_config() -> dict[str, Any]:
     """Load configuration from file, merging with defaults."""
     config_file = get_config_file()
     if not config_file.exists():
         return DEFAULT_CONFIG.copy()
 
-    with open(config_file, "r") as f:
+    with open(config_file) as f:
         user_config = yaml.safe_load(f) or {}
 
     # Deep merge with defaults
     return deep_merge(DEFAULT_CONFIG.copy(), user_config)
 
 
-def save_config(config: Dict[str, Any]) -> None:
+def save_config(config: dict[str, Any]) -> None:
     """Save configuration to file."""
     config_file = get_config_file()
     config_file.parent.mkdir(parents=True, exist_ok=True)
@@ -57,7 +56,7 @@ def save_config(config: Dict[str, Any]) -> None:
         yaml.safe_dump(config, f, default_flow_style=False, sort_keys=False)
 
 
-def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
     """Deep merge two dictionaries."""
     result = base.copy()
     for key, value in override.items():
@@ -68,7 +67,7 @@ def deep_merge(base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]
     return result
 
 
-def get_api_key(key_name: str) -> Optional[str]:
+def get_api_key(key_name: str) -> str | None:
     """Get an API key from config or environment."""
     # First check environment variable
     env_var = f"NEXUS_ENGINE_{key_name.upper()}"
@@ -89,7 +88,7 @@ def set_api_key(key_name: str, value: str) -> None:
     save_config(config)
 
 
-def get_channel_config(channel: str) -> Dict[str, Any]:
+def get_channel_config(channel: str) -> dict[str, Any]:
     """Get configuration for a specific channel."""
     config = load_config()
     return config.get("channels", {}).get(channel, {})

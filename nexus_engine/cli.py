@@ -1,26 +1,22 @@
 """Main CLI entrypoint for Nexus Engine."""
 
 import sys
-from pathlib import Path
-from typing import Optional
 
 import click
 from rich.console import Console
 from rich.table import Table
 
-from .config import (
-    DEFAULT_CONFIG_DIR,
-    get_api_key,
-    get_config_file,
-    load_config,
-    save_config,
-    set_api_key,
-)
 from .channels.youtube import (
-    search_youtube,
+    extract_video_id,
     get_transcript,
     get_video_info,
-    extract_video_id,
+    search_youtube,
+)
+from .config import (
+    DEFAULT_CONFIG_DIR,
+    get_config_file,
+    load_config,
+    set_api_key,
 )
 
 console = Console()
@@ -108,7 +104,7 @@ def doctor() -> None:
 @click.argument("key", required=False)
 @click.argument("value", required=False)
 @click.option("--list", "list_keys", is_flag=True, help="List all configured keys")
-def configure(key: Optional[str], value: Optional[str], list_keys: bool) -> None:
+def configure(key: str | None, value: str | None, list_keys: bool) -> None:
     """Configure API keys and settings.
 
     Examples:
@@ -143,7 +139,7 @@ def configure(key: Optional[str], value: Optional[str], list_keys: bool) -> None
 @click.option("--limit", "-l", default=10, help="Maximum results")
 def search(query: str, limit: int) -> None:
     """Search across all enabled channels (placeholder)."""
-    console.print(f"[yellow]Search not yet implemented[/yellow]")
+    console.print("[yellow]Search not yet implemented[/yellow]")
     console.print(f"Query: {query}, Limit: {limit}")
 
 
@@ -151,7 +147,7 @@ def search(query: str, limit: int) -> None:
 @click.argument("url")
 def read(url: str) -> None:
     """Read content from a URL (placeholder)."""
-    console.print(f"[yellow]Read not yet implemented[/yellow]")
+    console.print("[yellow]Read not yet implemented[/yellow]")
     console.print(f"URL: {url}")
 
 

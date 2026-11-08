@@ -11,6 +11,28 @@
       ],
       "implementation": [],
       "tests": []
+    },
+    {
+      "id": "fix-youtube-transcript-parsing",
+      "title": "Fix YouTube transcript VTT parsing and urllib import",
+      "status": "done",
+      "acceptance": [
+        "parse_vtt correctly handles VTT format with empty lines between cues",
+        "parse_timestamp handles empty string input without ValueError",
+        "urllib.request imported at module level for proper mocking in tests",
+        "All 33 tests pass",
+        "Ruff linting passes",
+        "Mypy passes for youtube.py"
+      ],
+      "implementation": [
+        "nexus_engine/channels/youtube.py"
+      ],
+      "tests": [
+        "tests/test_youtube.py::TestParseVTT::test_simple_vtt",
+        "tests/test_youtube.py::TestParseVTT::test_vtt_with_formatting",
+        "tests/test_youtube.py::TestGetTranscript::test_get_transcript_success"
+      ]
     }
   ]
 }
+
