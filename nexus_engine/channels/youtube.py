@@ -3,18 +3,16 @@
 import json
 import re
 import subprocess
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from urllib.parse import urlparse, parse_qs
+import urllib.request
+from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 from rich.console import Console
-
-from ..config import get_channel_config
 
 console = Console()
 
 
-def extract_video_id(url: str) -> Optional[str]:
+def extract_video_id(url: str) -> str | None:
     """Extract YouTube video ID from various URL formats."""
     # Handle bare video ID (11 chars, alphanumeric + hyphen/underscore)
     if re.match(r"^[A-Za-z0-9_-]{11}$", url):
@@ -33,10 +31,9 @@ def extract_video_id(url: str) -> Optional[str]:
     return None
 
 
-def search_youtube(query: str, limit: int = 10) -> List[Dict[str, Any]]:
+def search_youtube(query: str, limit: int = 10) -> list[dict[str, Any]]:
     """Search YouTube videos using yt-dlp flat playlist extraction."""
     try:
-        # Use yt-dlp's flat playlist to search without downloading
         cmd = [
             "yt-dlp",
             "--flat-playlist",
@@ -50,29 +47,30 @@ def search_youtube(query: str, limit: int = 10) -> List[Dict[str, Any]]:
 
         videos = []
         for line in result.stdout.strip().split("\n"):
-            if line:
-                try:
-                    data = json.loads(line)
-                    videos.append({
-                        "id": data.get("id"),
-                        "title": data.get("title"),
-                        "url": f"https://www.youtube.com/watch?v={data.get('id')}",
-                        "channel": data.get("channel"),
-                        "duration": data.get("duration"),
-                        "view_count": data.get("view_count"),
-                    })
-                except json.JSONDecodeError:
-                    continue
-        return videos[:limit]
+            if not line:
+                continue
+            data = json.loads(line)
+            videos.append({
+                "id": data.get("id"),
+                "title": data.get("title"),
+                "url": f"https://www.youtube.com/watch?v={data.get('id')}",
+                "duration": data.get("duration"),
+                "channel": data.get("uploader"),
+                "view_count": data.get("view_count"),
+            })
+        return videos
     except subprocess.TimeoutExpired:
-        console.print("[red]Search timed out[/red]")
+        console.print("[red]YouTube search timed out[/red]")
         return []
     except FileNotFoundError:
         console.print("[red]yt-dlp not found. Install with: pip install yt-dlp[/red]")
         return []
+    except json.JSONDecodeError:
+        console.print("[red]Failed to parse yt-dlp output[/red]")
+        return []
 
 
-def get_transcript(video_id: str, language: str = "en") -> Optional[Dict[str, Any]]:
+def get_transcript(video_id: str, language: str = "en") -> dict[str, Any] | None:
     """Extract transcript/subtitles from a YouTube video using yt-dlp."""
     try:
         cmd = [
@@ -131,10 +129,9 @@ def get_transcript(video_id: str, language: str = "en") -> Optional[Dict[str, An
         return None
 
 
-def fetch_subtitle_content(url: str) -> Optional[Dict[str, Any]]:
+def fetch_subtitle_content(url: str) -> dict[str, Any] | None:
     """Fetch and parse subtitle content from URL."""
     try:
-        import urllib.request
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=30) as response:
             content = response.read().decode("utf-8")
@@ -150,7 +147,7 @@ def fetch_subtitle_content(url: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def parse_vtt(content: str) -> List[Dict[str, Any]]:
+def parse_vtt(content: str) -> list[dict[str, Any]]:
     """Parse WebVTT subtitle content."""
     segments = []
     lines = content.split("\n")
@@ -165,7 +162,7 @@ def parse_vtt(content: str) -> List[Dict[str, Any]]:
         if "-->" in line:
             parts = line.split("-->")
             start_str = parts[0].strip()
-            end_str = parts[1].split(" ")[0].strip()
+            end_str = parts[1].strip().split(" ")[0].strip()
 
             start = parse_timestamp(start_str)
             end = parse_timestamp(end_str)
@@ -179,7 +176,6 @@ def parse_vtt(content: str) -> List[Dict[str, Any]]:
 
             text = " ".join(text_lines)
             # Remove VTT formatting tags
-            import re
             text = re.sub(r"<[^>]+>", "", text)
 
             if text:
@@ -196,46 +192,58 @@ def parse_vtt(content: str) -> List[Dict[str, Any]]:
 
 def parse_timestamp(ts: str) -> float:
     """Parse VTT timestamp (HH:MM:SS.mmm, MM:SS.mmm, or SS.mmm) to seconds."""
+    if not ts:
+        return 0.0
     parts = ts.split(":")
     if len(parts) == 3:
-        h, m, s = parts
+        h_str, m_str, s_str = parts
     elif len(parts) == 2:
-        h = 0
-        m, s = parts
+        h_str = "0"
+        m_str, s_str = parts
     elif len(parts) == 1:
-        h = 0
-        m = 0
-        s = parts[0]
+        h_str = "0"
+        m_str = "0"
+        s_str = parts[0]
     else:
         return 0.0
-    return round(int(h) * 3600 + int(m) * 60 + float(s), 3)
+    return round(int(h_str) * 3600 + int(m_str) * 60 + float(s_str), 3)
 
 
-def get_video_info(video_id: str) -> Optional[Dict[str, Any]]:
+def get_video_info(video_id: str) -> dict[str, Any] | None:
     """Get video metadata using yt-dlp."""
     try:
         cmd = [
             "yt-dlp",
             "--dump-json",
-            "--no-playlist",
+            "--skip-download",
             f"https://www.youtube.com/watch?v={video_id}",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
+            console.print(f"[red]yt-dlp failed: {result.stderr}[/red]")
             return None
+
         data = json.loads(result.stdout)
         return {
             "id": data.get("id"),
             "title": data.get("title"),
             "description": data.get("description"),
-            "channel": data.get("channel"),
-            "channel_id": data.get("channel_id"),
             "duration": data.get("duration"),
+            "channel": data.get("uploader"),
+            "channel_id": data.get("channel_id"),
             "view_count": data.get("view_count"),
             "like_count": data.get("like_count"),
             "upload_date": data.get("upload_date"),
             "tags": data.get("tags", []),
             "thumbnail": data.get("thumbnail"),
         }
-    except Exception:
+    except subprocess.TimeoutExpired:
+        console.print("[red]Video info extraction timed out[/red]")
         return None
+    except FileNotFoundError:
+        console.print("[red]yt-dlp not found. Install with: pip install yt-dlp[/red]")
+        return None
+    except json.JSONDecodeError:
+        console.print("[red]Failed to parse yt-dlp output[/red]")
+        return None
+
