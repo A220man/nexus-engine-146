@@ -1,38 +1,52 @@
 {
   "schema_version": 1,
-  "current_feature": "continue-implementation",
+  "current_feature": "youtube-transcript-api-backend",
   "features": [
     {
       "id": "continue-implementation",
       "title": "Continue implementation and resolve known failures",
-      "status": "in_progress",
+      "status": "done",
       "acceptance": [
         "Run checks, fix failures, and implement the next planned feature"
       ],
-      "implementation": [],
-      "tests": []
-    },
-    {
-      "id": "fix-youtube-transcript-parsing",
-      "title": "Fix YouTube transcript VTT parsing and urllib import",
-      "status": "done",
-      "acceptance": [
-        "parse_vtt correctly handles VTT format with empty lines between cues",
-        "parse_timestamp handles empty string input without ValueError",
-        "urllib.request imported at module level for proper mocking in tests",
-        "All 33 tests pass",
-        "Ruff linting passes",
-        "Mypy passes for youtube.py"
-      ],
       "implementation": [
-        "nexus_engine/channels/youtube.py"
+        "nexus_engine/channels/youtube.py",
+        "tests/test_youtube.py"
       ],
       "tests": [
         "tests/test_youtube.py::TestParseVTT::test_simple_vtt",
         "tests/test_youtube.py::TestParseVTT::test_vtt_with_formatting",
         "tests/test_youtube.py::TestGetTranscript::test_get_transcript_success"
       ]
+    },
+    {
+      "id": "youtube-transcript-api-backend",
+      "title": "YouTube optional hosted transcript API backend (getyoutubetranscript.com)",
+      "status": "done",
+      "acceptance": [
+        "Add getyoutubetranscript backend option to YouTube channel config",
+        "Implement fetch_transcript_getyoutubetranscript function",
+        "Update get_transcript to use configured backend",
+        "Update doctor command to mention API route when key is configured",
+        "Add tests for the new backend",
+        "All tests pass",
+        "Ruff linting passes",
+        "Mypy passes for youtube.py"
+      ],
+      "implementation": [
+        "nexus_engine/channels/youtube.py",
+        "nexus_engine/cli.py",
+        "tests/test_youtube.py"
+      ],
+      "tests": [
+        "tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_success",
+        "tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_no_api_key",
+        "tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_http_401",
+        "tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_http_404",
+        "tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_empty_segments",
+        "tests/test_youtube.py::TestGetTranscriptWithBackend::test_get_transcript_getyoutubetranscript_backend",
+        "tests/test_youtube.py::TestGetTranscriptWithBackend::test_get_transcript_explicit_backend"
+      ]
     }
   ]
 }
-

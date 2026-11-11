@@ -1,17 +1,13 @@
 """Tests for configuration management."""
 
-import os
 import tempfile
 from pathlib import Path
-
-import pytest
 
 from nexus_engine.config import (
     DEFAULT_CONFIG,
     deep_merge,
     get_api_key,
     get_config_dir,
-    get_config_file,
     load_config,
     save_config,
     set_api_key,

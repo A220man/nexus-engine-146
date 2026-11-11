@@ -1,15 +1,14 @@
 """Tests for YouTube channel."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from nexus_engine.channels.youtube import (
     extract_video_id,
-    search_youtube,
     get_transcript,
     get_video_info,
-    parse_vtt,
     parse_timestamp,
+    parse_vtt,
+    search_youtube,
 )
 
 
@@ -124,7 +123,6 @@ class TestSearchYoutube:
 
     @patch("nexus_engine.channels.youtube.subprocess.run")
     def test_search_not_found(self, mock_run):
-        import subprocess
         mock_run.side_effect = FileNotFoundError()
 
         results = search_youtube("test query", 5)
@@ -167,7 +165,6 @@ class TestGetTranscript:
 
     @patch("nexus_engine.channels.youtube.subprocess.run")
     def test_get_transcript_not_found(self, mock_run):
-        import subprocess
         mock_run.side_effect = FileNotFoundError()
 
         result = get_transcript("test_id", "en")
@@ -197,3 +194,106 @@ class TestGetVideoInfo:
 
         info = get_video_info("abc123")
         assert info is None
+
+
+class TestFetchTranscriptGetYouTubeTranscript:
+    """Tests for fetch_transcript_getyoutubetranscript function."""
+
+    @patch("nexus_engine.channels.youtube.urllib.request.urlopen")
+    def test_getyoutubetranscript_success(self, mock_urlopen):
+        from nexus_engine.channels.youtube import fetch_transcript_getyoutubetranscript
+
+        # Mock API response
+        mock_response = MagicMock()
+        mock_response.read.return_value = b'{"segments": [{"start": 0.0, "duration": 5.0, "text": "Hello world"}, {"start": 5.0, "duration": 3.0, "text": "This is a test"}]}'
+        mock_response.__enter__ = MagicMock(return_value=mock_response)
+        mock_response.__exit__ = MagicMock(return_value=None)
+        mock_urlopen.return_value = mock_response
+
+        result = fetch_transcript_getyoutubetranscript("test_id", "en", "test_api_key")
+        assert result is not None
+        assert "segments" in result
+        assert len(result["segments"]) == 2
+        assert result["segments"][0]["start"] == 0.0
+        assert result["segments"][0]["end"] == 5.0
+        assert result["segments"][0]["text"] == "Hello world"
+        assert result["segments"][1]["start"] == 5.0
+        assert result["segments"][1]["text"] == "This is a test"
+        assert "Hello world This is a test" in result["full_text"]
+
+    @patch("nexus_engine.channels.youtube.urllib.request.urlopen")
+    def test_getyoutubetranscript_no_api_key(self, mock_urlopen):
+        from nexus_engine.channels.youtube import fetch_transcript_getyoutubetranscript
+
+        result = fetch_transcript_getyoutubetranscript("test_id", "en", None)
+        assert result is None
+        mock_urlopen.assert_not_called()
+
+    @patch("nexus_engine.channels.youtube.urllib.request.urlopen")
+    def test_getyoutubetranscript_http_401(self, mock_urlopen):
+        import urllib.error
+
+        from nexus_engine.channels.youtube import fetch_transcript_getyoutubetranscript
+
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "http://example.com", 401, "Unauthorized", {}, None
+        )
+
+        result = fetch_transcript_getyoutubetranscript("test_id", "en", "test_api_key")
+        assert result is None
+
+    @patch("nexus_engine.channels.youtube.urllib.request.urlopen")
+    def test_getyoutubetranscript_http_404(self, mock_urlopen):
+        import urllib.error
+
+        from nexus_engine.channels.youtube import fetch_transcript_getyoutubetranscript
+
+        mock_urlopen.side_effect = urllib.error.HTTPError(
+            "http://example.com", 404, "Not Found", {}, None
+        )
+
+        result = fetch_transcript_getyoutubetranscript("test_id", "en", "test_api_key")
+        assert result is None
+
+    @patch("nexus_engine.channels.youtube.urllib.request.urlopen")
+    def test_getyoutubetranscript_empty_segments(self, mock_urlopen):
+        from nexus_engine.channels.youtube import fetch_transcript_getyoutubetranscript
+
+        mock_response = MagicMock()
+        mock_response.read.return_value = b'{"segments": []}'
+        mock_response.__enter__ = MagicMock(return_value=mock_response)
+        mock_response.__exit__ = MagicMock(return_value=None)
+        mock_urlopen.return_value = mock_response
+
+        result = fetch_transcript_getyoutubetranscript("test_id", "en", "test_api_key")
+        assert result is None
+
+
+class TestGetTranscriptWithBackend:
+    """Tests for get_transcript function with backend parameter."""
+
+    @patch("nexus_engine.channels.youtube.fetch_transcript_getyoutubetranscript")
+    @patch("nexus_engine.config.get_channel_config")
+    def test_get_transcript_getyoutubetranscript_backend(self, mock_get_config, mock_fetch):
+        from nexus_engine.channels.youtube import get_transcript
+
+        mock_get_config.return_value = {"backend": "getyoutubetranscript", "getyoutubetranscript_api_key": "test_key"}
+        mock_fetch.return_value = {"segments": [{"start": 0.0, "end": 5.0, "duration": 5.0, "text": "Test"}], "full_text": "Test"}
+
+        result = get_transcript("test_id", "en")
+        assert result is not None
+        assert result["full_text"] == "Test"
+        mock_fetch.assert_called_once_with("test_id", "en", "test_key")
+
+    @patch("nexus_engine.channels.youtube.fetch_transcript_getyoutubetranscript")
+    @patch("nexus_engine.config.get_channel_config")
+    def test_get_transcript_explicit_backend(self, mock_get_config, mock_fetch):
+        from nexus_engine.channels.youtube import get_transcript
+
+        mock_get_config.return_value = {"backend": "yt-dlp", "getyoutubetranscript_api_key": "config_key"}
+        mock_fetch.return_value = {"segments": [{"start": 0.0, "end": 5.0, "duration": 5.0, "text": "Explicit"}], "full_text": "Explicit"}
+
+        result = get_transcript("test_id", "en", backend="getyoutubetranscript", api_key="explicit_key")
+        assert result is not None
+        assert result["full_text"] == "Explicit"
+        mock_fetch.assert_called_once_with("test_id", "en", "explicit_key")

@@ -4,30 +4,36 @@ Each round completes one feature or repair. Future items are planned, not implem
 
 ## Current round
 
-continue-implementation
+youtube-transcript-api-backend
 
 ## Roadmap
 
 ### continue-implementation — Continue implementation and resolve known failures
 
-Status: in_progress
+Status: done
 
 Acceptance:
 - Run checks, fix failures, and implement the next planned feature
 
-### fix-youtube-transcript-parsing — Fix YouTube transcript VTT parsing and urllib import
+Implementation: `nexus_engine/channels/youtube.py`, `tests/test_youtube.py`
+
+Tests: `tests/test_youtube.py::TestParseVTT::test_simple_vtt`, `tests/test_youtube.py::TestParseVTT::test_vtt_with_formatting`, `tests/test_youtube.py::TestGetTranscript::test_get_transcript_success`
+
+### youtube-transcript-api-backend — YouTube optional hosted transcript API backend (getyoutubetranscript.com)
 
 Status: done
 
 Acceptance:
-- parse_vtt correctly handles VTT format with empty lines between cues
-- parse_timestamp handles empty string input without ValueError
-- urllib.request imported at module level for proper mocking in tests
-- All 33 tests pass
+- Add getyoutubetranscript backend option to YouTube channel config
+- Implement fetch_transcript_getyoutubetranscript function
+- Update get_transcript to use configured backend
+- Update doctor command to mention API route when key is configured
+- Add tests for the new backend
+- All tests pass
 - Ruff linting passes
 - Mypy passes for youtube.py
 
-Implementation: `nexus_engine/channels/youtube.py`
+Implementation: `nexus_engine/channels/youtube.py`, `nexus_engine/cli.py`, `tests/test_youtube.py`
 
-Tests: `tests/test_youtube.py::TestParseVTT::test_simple_vtt`, `tests/test_youtube.py::TestParseVTT::test_vtt_with_formatting`, `tests/test_youtube.py::TestGetTranscript::test_get_transcript_success`
+Tests: `tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_success`, `tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_no_api_key`, `tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_http_401`, `tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_http_404`, `tests/test_youtube.py::TestFetchTranscriptGetYouTubeTranscript::test_getyoutubetranscript_empty_segments`, `tests/test_youtube.py::TestGetTranscriptWithBackend::test_get_transcript_getyoutubetranscript_backend`, `tests/test_youtube.py::TestGetTranscriptWithBackend::test_get_transcript_explicit_backend`
 

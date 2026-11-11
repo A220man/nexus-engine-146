@@ -70,8 +70,38 @@ def search_youtube(query: str, limit: int = 10) -> list[dict[str, Any]]:
         return []
 
 
-def get_transcript(video_id: str, language: str = "en") -> dict[str, Any] | None:
-    """Extract transcript/subtitles from a YouTube video using yt-dlp."""
+def get_transcript(video_id: str, language: str = "en", backend: str | None = None, api_key: str | None = None) -> dict[str, Any] | None:
+    """Extract transcript/subtitles from a YouTube video.
+
+    Args:
+        video_id: YouTube video ID
+        language: Subtitle language code (default: en)
+        backend: Backend to use ("yt-dlp" or "getyoutubetranscript"), defaults to config
+        api_key: API key for GetYouTubeTranscript backend (from config or env)
+
+    Returns:
+        Dict with segments and full_text, or None on failure
+    """
+    # Determine backend from config if not provided
+    if backend is None:
+        from nexus_engine.config import get_channel_config
+        channel_config = get_channel_config("youtube")
+        backend = channel_config.get("backend", "yt-dlp")
+
+    # Get API key from config if not provided and using getyoutubetranscript backend
+    if backend == "getyoutubetranscript" and api_key is None:
+        from nexus_engine.config import get_channel_config
+        channel_config = get_channel_config("youtube")
+        api_key = channel_config.get("getyoutubetranscript_api_key")
+        # Also check environment variable
+        if not api_key:
+            import os
+            api_key = os.environ.get("NEXUS_ENGINE_YOUTUBE_TRANSCRIPT_API_KEY")
+
+    if backend == "getyoutubetranscript":
+        return fetch_transcript_getyoutubetranscript(video_id, language, api_key)
+
+    # Default: yt-dlp backend
     try:
         cmd = [
             "yt-dlp",
@@ -127,6 +157,7 @@ def get_transcript(video_id: str, language: str = "en") -> dict[str, Any] | None
     except json.JSONDecodeError:
         console.print("[red]Failed to parse yt-dlp output[/red]")
         return None
+
 
 
 def fetch_subtitle_content(url: str) -> dict[str, Any] | None:
@@ -247,3 +278,82 @@ def get_video_info(video_id: str) -> dict[str, Any] | None:
         console.print("[red]Failed to parse yt-dlp output[/red]")
         return None
 
+
+
+def fetch_transcript_getyoutubetranscript(video_id: str, language: str = "en", api_key: str | None = None) -> dict[str, Any] | None:
+    """Fetch transcript from GetYouTubeTranscript API.
+
+    Args:
+        video_id: YouTube video ID
+        language: Subtitle language code (default: en)
+        api_key: API key for GetYouTubeTranscript (from config or env)
+
+    Returns:
+        Dict with segments and full_text, or None on failure
+    """
+    if not api_key:
+        console.print("[red]GetYouTubeTranscript API key not configured[/red]")
+        return None
+
+    try:
+        url = f"https://getyoutubetranscript.com/api/v1/transcript?v={video_id}&timestamps=true"
+        if language != "en":
+            url += f"&language={language}"
+
+        req = urllib.request.Request(
+            url,
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Authorization": f"Bearer {api_key}",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=30) as response:
+            data = json.loads(response.read().decode("utf-8"))
+
+        # Parse the response format from getyoutubetranscript.com
+        # Response: {"segments": [{"start": 0.0, "duration": 5.0, "text": "..."}, ...]}
+        segments = data.get("segments", [])
+        if not segments:
+            console.print("[yellow]No transcript segments returned from GetYouTubeTranscript API[/yellow]")
+            return None
+
+        # Normalize segments to our format
+        normalized_segments = []
+        for seg in segments:
+            start = float(seg.get("start", 0))
+            duration = float(seg.get("duration", 0))
+            text = seg.get("text", "").strip()
+            if text:
+                normalized_segments.append({
+                    "start": start,
+                    "end": start + duration,
+                    "duration": duration,
+                    "text": text,
+                })
+
+        if not normalized_segments:
+            return None
+
+        return {
+            "segments": normalized_segments,
+            "full_text": " ".join(s["text"] for s in normalized_segments),
+        }
+    except urllib.error.HTTPError as e:
+        if e.code == 401:
+            console.print("[red]Invalid GetYouTubeTranscript API key[/red]")
+        elif e.code == 404:
+            console.print("[yellow]No transcript found for this video[/yellow]")
+        elif e.code == 429:
+            console.print("[red]GetYouTubeTranscript API rate limit exceeded[/red]")
+        else:
+            console.print(f"[red]GetYouTubeTranscript API error: HTTP {e.code}[/red]")
+        return None
+    except urllib.error.URLError as e:
+        console.print(f"[red]Failed to connect to GetYouTubeTranscript API: {e}[/red]")
+        return None
+    except json.JSONDecodeError:
+        console.print("[red]Failed to parse GetYouTubeTranscript API response[/red]")
+        return None
+    except Exception as e:
+        console.print(f"[red]Failed to fetch transcript from GetYouTubeTranscript API: {e}[/red]")
+        return None
