@@ -48,8 +48,11 @@ nexus-engine configure --list
 # Search YouTube videos
 nexus-engine youtube search "query" --limit 10
 
-# Get video transcript
+# Get video transcript (yt-dlp backend)
 nexus-engine youtube transcript "https://www.youtube.com/watch?v=VIDEO_ID" --lang en
+
+# Get video transcript (GetYouTubeTranscript API backend)
+nexus-engine youtube transcript "https://www.youtube.com/watch?v=VIDEO_ID" --lang en --backend getyoutubetranscript
 
 # Get video metadata
 nexus-engine youtube info "https://www.youtube.com/watch?v=VIDEO_ID"

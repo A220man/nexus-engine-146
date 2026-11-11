@@ -89,8 +89,20 @@ def doctor() -> None:
     deps = [
         ("playwright", "Browser automation"),
         ("browser_cookie3", "Cookie extraction"),
-        ("yt_dlp", "YouTube transcript extraction"),
+        ("yt_dlp", "YouTube transcript extraction (yt-dlp backend)"),
     ]
+
+    # Check for GetYouTubeTranscript API key
+    config = load_config()
+    yt_api_key = config.get("api_keys", {}).get("youtube_transcript_api_key") or config.get("channels", {}).get("youtube", {}).get("getyoutubetranscript_api_key")
+    import os
+    if not yt_api_key:
+        yt_api_key = os.environ.get("NEXUS_ENGINE_YOUTUBE_TRANSCRIPT_API_KEY")
+
+    if yt_api_key:
+        console.print("  getyoutubetranscript: [green]Configured[/green] (YouTube transcript API backend)")
+    else:
+        console.print("  getyoutubetranscript: [yellow]Not configured[/yellow] (YouTube transcript API backend - set youtube_transcript_api_key to enable)")
 
     for module, desc in deps:
         try:
@@ -191,11 +203,14 @@ def youtube_search(query: str, limit: int) -> None:
 @youtube.command("transcript")
 @click.argument("url_or_id")
 @click.option("--lang", "-l", default="en", help="Subtitle language code")
-def youtube_transcript(url_or_id: str, lang: str) -> None:
+@click.option("--backend", type=click.Choice(["yt-dlp", "getyoutubetranscript"]), default=None, help="Transcript backend to use")
+def youtube_transcript(url_or_id: str, lang: str, backend: str | None) -> None:
     """Extract transcript from a YouTube video."""
     video_id = extract_video_id(url_or_id) or url_or_id
     console.print(f"[cyan]Fetching transcript for video:[/cyan] {video_id}")
-    result = get_transcript(video_id, lang)
+    if backend:
+        console.print(f"[cyan]Using backend:[/cyan] {backend}")
+    result = get_transcript(video_id, lang, backend=backend)
     if not result:
         return
     segments = result.get("segments", [])
