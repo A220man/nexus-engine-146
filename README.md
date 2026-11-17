@@ -1,5 +1,7 @@
 # Nexus Engine 146 — Ryan Vo
 
+Current version: `1.5.0`.
+
 > Work in progress. This checkpoint may be incomplete or fail tests. See PLAN.md and STATUS.md before use.
 
 
@@ -85,7 +87,7 @@ Environment variables can override config file values:
 ## Commands
 
 ### `nexus-engine doctor`
-Check environment, configuration, and optional dependencies.
+Check environment, configuration, and optional dependencies. (YouTube transcript API route printed when configured.)
 
 ### `nexus-engine configure`
 Manage API keys and settings.

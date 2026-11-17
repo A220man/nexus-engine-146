@@ -101,6 +101,7 @@ def doctor() -> None:
 
     if yt_api_key:
         console.print("  getyoutubetranscript: [green]Configured[/green] (YouTube transcript API backend)")
+        console.print("  YouTube transcript API route: https://getyoutubetranscript.com/api/v1/transcript")
     else:
         console.print("  getyoutubetranscript: [yellow]Not configured[/yellow] (YouTube transcript API backend - set youtube_transcript_api_key to enable)")
 

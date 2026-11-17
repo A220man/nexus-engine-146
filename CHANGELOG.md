@@ -1,8 +1,11 @@
 # Changelog
 
-## 1.4.0 — work-in-progress checkpoint
+## 1.5.0 — work-in-progress checkpoint
 
 Partial code published for continued development. Known issues: STATUS.md.
+
+## 1.4.0 — work-in-progress checkpoint
+Partial code published for continued development. YouTube transcript API backend implemented with doctor route; known issues: STATUS.md.
 
 ## 1.3.0 — work-in-progress checkpoint
 
