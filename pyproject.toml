@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nexus-engine-146"
-version = "1.5.0"
+version = "1.6.0"
 description = "Give your AI agent eyes to see the entire internet. Read & search Twitter, Reddit, YouTube, GitHub, Bilibili, XiaoHongShu — one CLI, zero API fees."
 readme = "README.md"
 license = {text = "MIT"}
